@@ -1,102 +1,28 @@
 # REPONSES - TP N°2 Linux & Scripting Bash
 
-## Exercice 2.0 - Mise en place du dépôt
-- Dépôt GitHub `tp-bash` créé sans README, puis cloné avec `git clone`.
-- Ajout d'un `.gitignore`, puis commit et push.
+## Exercice 2.1 - Que donne chmod 644 sur un script ?
+`644` donne `rw-r--r--` : lecture et écriture pour le propriétaire, lecture seule pour le groupe et les autres. Il n'y a aucun droit d'exécution (`x`), donc `./script.sh` renvoie « Permission denied ». C'est le droit habituel d'un fichier de données ou de configuration, pas d'un script à lancer. Pour un script réservé au propriétaire, on utilise `chmod 700` (`rwx------`).
 
-## Exercice 2.1 - Navigation, recherche et permissions
+## Exercice 2.3 - Que se passe-t-il sans set -Eeuo pipefail si tar échoue ?
+Sans `set -Eeuo pipefail`, si `tar` échoue (disque plein, droits insuffisants...), le script continue à tort : il affiche « Archive créée » alors qu'elle n'existe pas ou est corrompue, puis supprime les anciennes sauvegardes. On peut ainsi perdre les vieilles sauvegardes valides sans en avoir de nouvelle. Avec `set -e`, le script s'arrête dès l'échec de `tar`. De plus, `-u` détecte les variables non définies et `pipefail` les erreurs au milieu d'un pipe.
 
-### 1. Arborescence
-```bash
-mkdir -p logs data
-```
+## Exercice 2.5 - Transformer ci.sh en vrai pipeline CI
 
-### 2. Lister les fichiers .log
-```bash
-ls -lh logs/*.log
-```
--rw-rw-r-- 1 sosodev sosodev 14 nov.  20 23:55 logs/app1.log
--rw-rw-r-- 1 sosodev sosodev 29 oct.  27 15:41 logs/fichier1.log
--rw-rw-r-- 1 sosodev sosodev 28 oct.  27 15:41 logs/fichier2.log
+**Étapes à ajouter :**
+- Déclenchement automatique à chaque push (webhook ou GitHub Actions).
+- Installation des dépendances (`npm ci`, `pip install -r requirements.txt`).
+- Vrais tests unitaires et d'intégration, plus un linter (ShellCheck, ESLint).
+- Build du projet (compilation, image Docker).
+- Notification (mail, Discord) en cas d'échec.
+- Déploiement automatique (CD) avec possibilité de rollback.
+- Gestion des secrets (variables d'environnement) et archivage des artefacts.
 
-### 3. Fichiers modifiés il y a plus de 7 jours
-```bash
-find . -type f -mtime +7
-```
-./.git/hooks/pre-receive.sample
-./.git/hooks/prepare-commit-msg.sample
-./.git/hooks/pre-applypatch.sample
-./.git/hooks/pre-merge-commit.sample
-./.git/hooks/fsmonitor-watchman.sample
-./.git/hooks/commit-msg.sample
-./.git/hooks/post-update.sample
-./.git/hooks/update.sample
-./.git/hooks/sendemail-validate.sample
-./.git/hooks/pre-commit.sample
-./.git/refs/remotes/origin/main
-./.git/refs/heads/main
-./.git/config
-./.gitignore
-./data/test.sh
-./logs/fichier2.log
-./logs/fichier1.log
+**Points de défaillance à gérer avec des codes de retour :**
+- Argument manquant ou invalide (`exit 1`).
+- Échec du `git clone` / `git pull` : URL fausse, réseau coupé, droits insuffisants.
+- Échec de l'installation des dépendances.
+- Échec des tests : le pipeline doit s'arrêter avec un code différent de 0.
+- Échec du build ou du déploiement : disque plein, serveur injoignable.
+- Erreur au milieu d'un pipe (`pipefail`).
 
-### 4. Recherche du mot « erreur »
-Avant l'ajout :
-```bash
-grep -ri "erreur" --include="*.log" .
-```
-(aucun résultat)
-
-Après `echo "erreur" >> logs/app1.log` :
-logs/app1.log:erreur
-logs/app1.log:erreur
-logs/app1.log:erreur
-
-### 5. Script exécutable uniquement par le propriétaire
-```bash
-chmod 700 test.sh
-ls -l test.sh
-```
--rwx------ 1 sosodev sosodev 27 nov.   3 15:13 test.sh
-
-
-## Exercice 2.2 - Vérification d'espace disque
-
-
-```bash
-chmod +x check_disk.sh
-./check_disk.sh
-```
-OK : disque utilisé à 78% (seuil : 80%)
-
-```bash
-./check_disk.sh 10
-```
-ALERTE : disque utilisé à 78% (seuil : 10%)
-
-
-
-## Exercice 2.3 - Script de sauvegarde
-
-```bash
-chmod +x backup.sh
-./backup.sh
-./backup.sh dossier_inexistant
-echo $?
-touch -d "10 days ago" backups/backup_vieille.tar.gz
-./backup.sh
-ls -lh backups/
-```
-
-Sortie :
-```
-Archive créée : backups/backup_2026-11-21_00-09-49.tar.gz
-Erreur : le dossier 'dossier_inexistant' n'existe pas
-1
-Archive créée : backups/backup_2026-11-21_00-09-49.tar.gz
-Ancienne sauvegarde supprimée : backups/backup_vieille.tar.gz
-total 4,0K
--rw-rw-r-- 1 sosodev sosodev 234 nov.  21 00:09 backup_2026-11-21_00-09-49.tar.gz
-```
-
+Chaque étape doit renvoyer un code non nul en cas d'échec, pour que l'étape suivante ne s'exécute pas à tort.

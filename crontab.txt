@@ -1,0 +1,1 @@
+0 2 * * * cd /home/sosodev/Bureau/M2/tp-bash && ./backup.sh >> /home/sosodev/Bureau/M2/tp-bash/logs/backup_cron.log 2>&1
