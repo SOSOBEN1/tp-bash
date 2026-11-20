@@ -76,3 +76,27 @@ OK : disque utilisé à 78% (seuil : 80%)
 ALERTE : disque utilisé à 78% (seuil : 10%)
 
 
+
+## Exercice 2.3 - Script de sauvegarde
+
+```bash
+chmod +x backup.sh
+./backup.sh
+./backup.sh dossier_inexistant
+echo $?
+touch -d "10 days ago" backups/backup_vieille.tar.gz
+./backup.sh
+ls -lh backups/
+```
+
+Sortie :
+```
+Archive créée : backups/backup_2026-11-21_00-09-49.tar.gz
+Erreur : le dossier 'dossier_inexistant' n'existe pas
+1
+Archive créée : backups/backup_2026-11-21_00-09-49.tar.gz
+Ancienne sauvegarde supprimée : backups/backup_vieille.tar.gz
+total 4,0K
+-rw-rw-r-- 1 sosodev sosodev 234 nov.  21 00:09 backup_2026-11-21_00-09-49.tar.gz
+```
+
